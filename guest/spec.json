@@ -138,15 +138,20 @@
     "backports": [
       {
         "id": "1password-arm64-installer",
-        "description": "Install 1Password from its signed ARM64 release when Omarchy's x86_64 packages are unavailable.",
+        "description": "Install 1Password from its signed ARM64 release with VM-compatible launchers and Quick Access.",
         "reference": "https://github.com/basecamp/omarchy/issues/87",
         "patch": "patches/omarchy/1password-arm64-installer.patch",
-        "patchSha256": "658a52f34ddc4d7cf916de23cf535b5d3db2fd6fd5d91007999ef9dfa1227988",
+        "patchSha256": "8696ada095cd8c4a5b42ed0466417e423cb4cbce122ddb52870c565d2bf40bca",
         "targets": [
           {
             "path": "bin/omarchy-install-service-1password",
             "beforeSha256": "5d5a5a9b3cf87579b4232067c9f7c78091cecf250111b802ffffa49c607f52d7",
-            "afterSha256": "b074276df3f99a6d75f7d0953975fe3019e21dc168f38408802b113bb6812db9"
+            "afterSha256": "ce404a13daf7cb08fab413ae0100786fc64abe6aefc403147114e6208c58b5c4"
+          },
+          {
+            "path": "default/hypr/bindings/applications.lua",
+            "beforeSha256": "6ef93bfe3df6f3b93379e0b194f3ec925cd84cfdb30115c6ece18198f21e0e3e",
+            "afterSha256": "e71e1cd7a2eaab92d4fb3f92f0ede2fb5c8519222dce1cdb38ae80c76148cf63"
           }
         ]
       },

@@ -966,6 +966,29 @@ HOTPLUG=1
                 < onepassword_installer.index("sudo /opt/1Password/after-install.sh"),
                 "1Password is root-owned before its vendor post-install script runs",
             )
+            check(
+                "sudo tee /usr/local/bin/1password" in onepassword_installer
+                and "export LIBGL_ALWAYS_SOFTWARE=1" in onepassword_installer
+                and 'exec /opt/1Password/1password --disable-gpu "$@"'
+                in onepassword_installer
+                and "Exec=/usr/local/bin/1password %U" in onepassword_installer
+                and 'echo "Quick Access: Ctrl + Shift + Space"'
+                in onepassword_installer
+                and 'echo "Full 1Password app: Super + Shift + /"'
+                in onepassword_installer
+                and onepassword_installer.index("sudo /opt/1Password/after-install.sh")
+                < onepassword_installer.index("sudo tee /usr/local/bin/1password"),
+                "1Password launchers use software rendering after vendor setup",
+            )
+            applications_bindings = read(
+                staged_omarchy / "default/hypr/bindings/applications.lua"
+            )
+            check(
+                'o.bind("CTRL + SHIFT + SPACE", "1Password Quick Access", '
+                '{ launch = "1password --quick-access" })'
+                in applications_bindings,
+                "1Password Quick Access has a Wayland compositor shortcut",
+            )
 
             notification_card = read(
                 staged_omarchy / "shell/plugins/notifications/components/NotificationCard.qml"
