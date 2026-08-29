@@ -101,6 +101,24 @@ def main() -> None:
                 f"backport target digests are pinned: {backport['id']} {target['path']}",
             )
 
+    post_build_installers = authenticity["postBuildUserInstallers"]
+    check(
+        post_build_installers
+        == [
+            {
+                "id": "1password-arm64",
+                "userInitiated": True,
+                "delivery": "mutable-vendor-release",
+                "applicationUrl": "https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz",
+                "signingKeyUrl": "https://downloads.1password.com/linux/keys/1password.asc",
+                "signingFingerprint": "3FEF9748469ADBE15DA7CA80AC2D62742012EA22",
+                "cliSource": "https://aur.archlinux.org/packages/1password-cli",
+                "factoryProvenance": "excluded",
+            }
+        ],
+        "mutable post-build 1Password installation is an explicit trust boundary",
+    )
+
     pacman_conf = read(GUEST / spec["inputs"]["pacmanConfig"])
     check(
         "[core]" in pacman_conf and "[alarm]" in pacman_conf,
@@ -500,6 +518,21 @@ def main() -> None:
     check(
         "**Glaze**" in third_party_notices and "MIT" in third_party_notices,
         "third-party notices cover the Hyprland build's bundled Glaze headers",
+    )
+    check(
+        "**1Password**" in third_party_notices
+        and "not redistributed" in third_party_notices
+        and "mutable post-build inputs" in third_party_notices
+        and "excluded from factory provenance" in third_party_notices,
+        "third-party notices distinguish mutable 1Password installation from redistribution",
+    )
+    architecture = read(REPO / "docs/architecture.md")
+    check(
+        "Optional, user-initiated installers" in architecture
+        and "separate trust boundary" in architecture
+        and "not redistributed in the app" in architecture
+        and post_build_installers[0]["factoryProvenance"] == "excluded",
+        "architecture documents mutable post-build user installation boundaries",
     )
 
     finalizer = read(GUEST / "scripts/finalize-rootfs.sh")
@@ -902,16 +935,27 @@ HOTPLUG=1
             )
             subprocess.run(["bash", "-n", str(onepassword_installer_path)], check=True)
             onepassword_installer = read(onepassword_installer_path)
+            onepassword_boundary = post_build_installers[0]
             check(
                 "[[ $(uname -m) == aarch64 ]]" in onepassword_installer
-                and "downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz"
-                in onepassword_installer
-                and "3FEF9748469ADBE15DA7CA80AC2D62742012EA22" in onepassword_installer
-                and 'gpg --batch --verify "$signature" "$archive"' in onepassword_installer
+                and onepassword_boundary["applicationUrl"] in onepassword_installer
+                and onepassword_boundary["signingKeyUrl"] in onepassword_installer
+                and onepassword_boundary["signingFingerprint"] in onepassword_installer
                 and "curl --fail --location --proto '=https' --tlsv1.2" in onepassword_installer
-                and "yay -S --noconfirm --needed 1password-cli" in onepassword_installer
+                and 'GNUPGHOME="$gpg_home" yay -S --noconfirm --needed 1password-cli'
+                in onepassword_installer
                 and "omarchy-pkg-add 1password 1password-cli" in onepassword_installer,
-                "1Password uses signed ARM64 releases and preserves the upstream package path",
+                "1Password uses its declared mutable ARM64 boundary and preserves the package path",
+            )
+            check(
+                "install -dm700 \"$gpg_home\"" in onepassword_installer
+                and "gpg --homedir \"$gpg_home\"" in onepassword_installer
+                and "gpg --batch" not in onepassword_installer
+                and "--status-fd 1 --verify" in onepassword_installer
+                and '$2 == "VALIDSIG" { print $3 }' in onepassword_installer
+                and '[[ $valid_signer != "$ONEPASSWORD_SIGNING_FINGERPRINT" ]]'
+                in onepassword_installer,
+                "1Password signature verification is isolated and bound to the expected signer",
             )
 
             notification_card = read(
