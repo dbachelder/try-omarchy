@@ -113,6 +113,7 @@ def main() -> None:
                 "signingKeyUrl": "https://downloads.1password.com/linux/keys/1password.asc",
                 "signingFingerprint": "3FEF9748469ADBE15DA7CA80AC2D62742012EA22",
                 "cliSource": "https://aur.archlinux.org/packages/1password-cli",
+                "runtimePackages": ["which"],
                 "factoryProvenance": "excluded",
             }
         ],
@@ -942,8 +943,10 @@ HOTPLUG=1
                 and onepassword_boundary["signingKeyUrl"] in onepassword_installer
                 and onepassword_boundary["signingFingerprint"] in onepassword_installer
                 and "curl --fail --location --proto '=https' --tlsv1.2" in onepassword_installer
-                and 'GNUPGHOME="$gpg_home" yay -S --noconfirm --needed 1password-cli'
+                and 'GNUPGHOME="$gpg_home" yay -S --noconfirm --needed \\\n'
+                "    --answerclean None --answerdiff None 1password-cli"
                 in onepassword_installer
+                and "omarchy-pkg-add which" in onepassword_installer
                 and "omarchy-pkg-add 1password 1password-cli" in onepassword_installer,
                 "1Password uses its declared mutable ARM64 boundary and preserves the package path",
             )
@@ -956,6 +959,12 @@ HOTPLUG=1
                 and '[[ $valid_signer != "$ONEPASSWORD_SIGNING_FINGERPRINT" ]]'
                 in onepassword_installer,
                 "1Password signature verification is isolated and bound to the expected signer",
+            )
+            check(
+                'sudo chown -R root:root /opt/1Password' in onepassword_installer
+                and onepassword_installer.index("sudo chown -R root:root /opt/1Password")
+                < onepassword_installer.index("sudo /opt/1Password/after-install.sh"),
+                "1Password is root-owned before its vendor post-install script runs",
             )
 
             notification_card = read(

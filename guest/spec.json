@@ -141,12 +141,12 @@
         "description": "Install 1Password from its signed ARM64 release when Omarchy's x86_64 packages are unavailable.",
         "reference": "https://github.com/basecamp/omarchy/issues/87",
         "patch": "patches/omarchy/1password-arm64-installer.patch",
-        "patchSha256": "fdcc4a5d7602303f945dee71b92fd4e3cac44d7ced565b42064bb72dce8061ed",
+        "patchSha256": "658a52f34ddc4d7cf916de23cf535b5d3db2fd6fd5d91007999ef9dfa1227988",
         "targets": [
           {
             "path": "bin/omarchy-install-service-1password",
             "beforeSha256": "5d5a5a9b3cf87579b4232067c9f7c78091cecf250111b802ffffa49c607f52d7",
-            "afterSha256": "e629e83b72f07197ee24ae899218d4dc59286703dcdaf6d5e91d0215fd6bd69c"
+            "afterSha256": "b074276df3f99a6d75f7d0953975fe3019e21dc168f38408802b113bb6812db9"
           }
         ]
       },
@@ -193,6 +193,9 @@
         "signingKeyUrl": "https://downloads.1password.com/linux/keys/1password.asc",
         "signingFingerprint": "3FEF9748469ADBE15DA7CA80AC2D62742012EA22",
         "cliSource": "https://aur.archlinux.org/packages/1password-cli",
+        "runtimePackages": [
+          "which"
+        ],
         "factoryProvenance": "excluded"
       }
     ],
