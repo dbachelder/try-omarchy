@@ -126,16 +126,30 @@
   "authenticity": {
     "verbatimRuntimeTrees": [
       "applications",
-      "bin",
       "config",
       "default",
       "install",
       "migrations"
     ],
     "backportedRuntimeTrees": [
+      "bin",
       "shell"
     ],
     "backports": [
+      {
+        "id": "1password-arm64-installer",
+        "description": "Install 1Password from its signed ARM64 release when Omarchy's x86_64 packages are unavailable.",
+        "reference": "https://github.com/basecamp/omarchy/issues/87",
+        "patch": "patches/omarchy/1password-arm64-installer.patch",
+        "patchSha256": "0697806fa417b5842ac2205526427a5a927855bdba7854a859e6de7ef6ddc571",
+        "targets": [
+          {
+            "path": "bin/omarchy-install-service-1password",
+            "beforeSha256": "5d5a5a9b3cf87579b4232067c9f7c78091cecf250111b802ffffa49c607f52d7",
+            "afterSha256": "fdc935ec8c13ff0e4d718bf04c307a47e3296c07e46d4e1f949098147bff4ff7"
+          }
+        ]
+      },
       {
         "id": "notification-hover-close",
         "description": "Restore the upstream hover-revealed notification dismiss control omitted from v4.0.1.",
@@ -173,6 +187,7 @@
     "requiredPaths": [
       "LICENSE",
       "bin/omarchy",
+      "bin/omarchy-install-service-1password",
       "bin/omarchy-launch-shell",
       "bin/omarchy-menu",
       "bin/omarchy-provision-owner",

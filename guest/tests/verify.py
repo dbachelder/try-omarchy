@@ -68,16 +68,20 @@ def main() -> None:
     verbatim_trees = authenticity["verbatimRuntimeTrees"]
     backported_trees = authenticity["backportedRuntimeTrees"]
     check(
-        "shell" not in verbatim_trees
-        and backported_trees == ["shell"]
+        not {"bin", "shell"} & set(verbatim_trees)
+        and backported_trees == ["bin", "shell"]
         and not set(verbatim_trees) & set(backported_trees),
-        "patched shell tree is separated from verbatim upstream runtime trees",
+        "patched bin and shell trees are separated from verbatim upstream runtime trees",
     )
     backports = authenticity["backports"]
     check(
         [backport.get("id") for backport in backports]
-        == ["notification-hover-close", "notification-screen-privacy"],
-        "notification backports are explicitly ordered and identified",
+        == [
+            "1password-arm64-installer",
+            "notification-hover-close",
+            "notification-screen-privacy",
+        ],
+        "Omarchy backports are explicitly ordered and identified",
     )
     for backport in backports:
         patch_path = GUEST / backport["patch"]
@@ -892,6 +896,23 @@ HOTPLUG=1
                         == target["afterSha256"],
                         f"backport produces reviewed postimage: {backport['id']} {target['path']}",
                     )
+
+            onepassword_installer_path = (
+                staged_omarchy / "bin/omarchy-install-service-1password"
+            )
+            subprocess.run(["bash", "-n", str(onepassword_installer_path)], check=True)
+            onepassword_installer = read(onepassword_installer_path)
+            check(
+                "[[ $(uname -m) == aarch64 ]]" in onepassword_installer
+                and "downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz"
+                in onepassword_installer
+                and "3FEF9748469ADBE15DA7CA80AC2D62742012EA22" in onepassword_installer
+                and 'gpg --batch --verify "$signature" "$archive"' in onepassword_installer
+                and "curl --fail --location --proto '=https' --tlsv1.2" in onepassword_installer
+                and "yay -S --noconfirm --needed 1password-cli" in onepassword_installer
+                and "omarchy-pkg-add 1password 1password-cli" in onepassword_installer,
+                "1Password uses signed ARM64 releases and preserves the upstream package path",
+            )
 
             notification_card = read(
                 staged_omarchy / "shell/plugins/notifications/components/NotificationCard.qml"
