@@ -455,6 +455,15 @@ def main() -> None:
         "guest builder pins Rust for source-built components",
     )
 
+    check(
+        "COPY guest/mirrorlist.builder /etc/pacman.d/mirrorlist" in containerfile
+        and read(GUEST / "mirrorlist.builder").splitlines()[-1]
+        == "Server = https://pkgmirror.sametimetomorrow.net/aarch64/repos/2026/09/03/$repo"
+        and "SigLevel = Required DatabaseOptional" in containerfile
+        and "pacman-key --populate archlinuxarm" in containerfile,
+        "builder freezes ARM repositories while requiring official package signatures",
+    )
+
     materialize = read(GUEST / "scripts/materialize-omarchy.sh")
     check(
         'mkdir -p "$root/etc/skel/.local/state/omarchy/toggles/hypr"' in materialize

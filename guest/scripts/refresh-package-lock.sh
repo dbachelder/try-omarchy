@@ -73,7 +73,8 @@ chmod 0755 "$temporary"
 mkdir -p "$temporary/db"
 chmod 0755 "$temporary/db"
 config="$temporary/pacman.conf"
-cp "$upstream_pacman_config" "$config"
+# External curl writes into root-owned temporary directories, as in build.sh.
+sed -e "/^\[options\]$/r $guest_dir/pacman-download.conf" -e '/^ParallelDownloads[[:space:]]*=/d' -e '/^DownloadUser[[:space:]]*=/d' "$upstream_pacman_config" >"$config"
 if [[ ${OMARCHY_PACMAN_DISABLE_SANDBOX:-0} == "1" ]]; then
   sed -i '/^\[options\]$/a DisableSandbox' "$config"
 fi

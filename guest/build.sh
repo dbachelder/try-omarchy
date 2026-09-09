@@ -168,6 +168,9 @@ fi
 options_sections=0
 pinned_repo_inserted=0
 while IFS= read -r line || [[ -n $line ]]; do
+  # External curl must create files in the root-owned build cache and DB.
+  # This disposable build configuration must not inherit the guest's alpm user.
+  [[ $line =~ ^(ParallelDownloads|DownloadUser)[[:space:]]*= ]] && continue
   if [[ -n $pinned_repo && $line =~ ^\[[^]]+\]$ && $line != "[options]" && $pinned_repo_inserted == 0 ]]; then
     printf '[try-omarchy-pinned-cache]\n'
     printf 'SigLevel = Required DatabaseOptional\n'
@@ -176,6 +179,7 @@ while IFS= read -r line || [[ -n $line ]]; do
   fi
   printf '%s\n' "$line"
   if [[ $line == "[options]" ]]; then
+    cat "$guest_dir/pacman-download.conf"
     printf 'CacheDir = %s\n' "$package_cache"
     if [[ ${OMARCHY_PACMAN_DISABLE_SANDBOX:-0} == "1" ]]; then
       printf 'DisableSandbox\n'

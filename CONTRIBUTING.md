@@ -53,6 +53,27 @@ review. Run `make guest` and `make test`. The upstream source can report a devel
 version even for an official tag, so never hand-edit the `version` or `release`
 fields to make them agree; they record different upstream identities.
 
+## Guest build repositories
+
+The disposable Docker builder uses `guest/mirrorlist.builder`, a dated community
+archive of Arch Linux ARM, so rolling mirrors cannot remove the pinned Rust and
+Hyprland toolchains. Package signatures remain required against the pinned
+official Arch Linux ARM keyring. The finished guest uses the normal ARM mirrors
+from `guest/mirrorlist.aarch64` for updates. Build downloads use the bounded
+retry policy in `guest/pacman-download.conf`, honoring HTTP `Retry-After`
+responses and backing off on transient failures. Permanent errors still fail.
+The disposable build configs omit `DownloadUser` so external curl can write
+to root-owned caches and databases; the installed guest retains `DownloadUser = alpm`.
+
+The 2026-09-03 snapshot retains every compiler version recorded in `guest/spec.json`.
+Its resolved guest transaction updates only expat (2.8.4-1), fastfetch (2.68.1-1),
+and pcre2 (10.48-1) from the previous lock. Source pins and expected ttfx/Hyprland
+binary digests remain unchanged and must pass the full guest build.
+
+When advancing the snapshot, resolve and review the complete package lock,
+check every pinned compiler package, and rebuild the guest. Do not add live
+mirror fallbacks: mixing repository dates defeats the snapshot.
+
 ## Tests
 
 Tests should describe a user-visible behavior, policy, data contract, or
