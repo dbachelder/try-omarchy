@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 GUEST = Path(__file__).resolve().parents[1]
@@ -14,6 +15,15 @@ UPDATER = GUEST / "scripts/update-upstream-pin.py"
 
 class UpdateUpstreamPinTests(unittest.TestCase):
     def setUp(self) -> None:
+        # Fixture identities must not inherit URL rewrites, signing, or hooks
+        # from the developer's Git configuration. The updater inherits this
+        # environment too, so it observes the origin that the fixture created.
+        git_environment = patch.dict(os.environ, {
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+        })
+        git_environment.start()
+        self.addCleanup(git_environment.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.source = self.root / "source"
